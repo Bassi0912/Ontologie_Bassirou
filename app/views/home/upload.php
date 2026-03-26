@@ -24,7 +24,7 @@
     </form>
     <div class="demo-section">
         <h3>Ontologie de démonstration</h3>
-        <p style="font-size:.75rem;color:var(--muted);margin-bottom:.875rem">Testez OntGraph avec <code style="color:var(--cyan);font-size:.72rem">humans.rdfs</code> — une ontologie de personnes et relations familiales.</p>
+        <p style="font-size:.75rem;color:var(--muted);margin-bottom:.875rem">Testez Web Sémantiqua avec <code style="color:var(--cyan);font-size:.72rem">humans.rdfs</code> — une ontologie de personnes et relations familiales.</p>
         <button class="btn btn-secondary" onclick="loadDemo(event)">Charger l'exemple humans.rdf</button>
     </div>
 </section>

@@ -1,7 +1,7 @@
 <section class="hero">
-    <div class="hero-eyebrow">Visual Knowledge Engineering</div>
+    <div class="hero-eyebrow">Web Sémantique & Visualisation</div>
     <h1>Explorez vos<br>ontologies OWL 2<br><em>visuellement.</em></h1>
-    <p class="hero-desc">OntGraph transforme vos fichiers RDF/OWL en visualisations interactives. Hiérarchies, propriétés, relations — tout devient lisible.</p>
+    <p class="hero-desc">Web Sémantiqua transforme vos fichiers RDF/OWL en visualisations interactives. Hiérarchies, propriétés, relations — tout devient lisible.</p>
     <div class="hero-actions">
         <a href="/upload" class="btn btn-primary">Charger une ontologie</a>
         <?php if ($hasFile): ?>

@@ -11,8 +11,8 @@
                     <line x1="17" y1="11" x2="24" y2="22" stroke="#1de9b6" stroke-width="1"/>
                 </svg>
                 <div>
-                    <div class="sidebar-logo-name">OntGraph</div>
-                    <div class="sidebar-logo-tag">Knowledge Explorer</div>
+                    <div class="sidebar-logo-name" style="font-family:'Cinzel',serif;font-size:.9rem">Web Sémantiqua</div>
+                    <div class="sidebar-logo-tag">Explorateur de connaissances</div>
                 </div>
             </div>
         </div>
