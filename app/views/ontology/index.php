@@ -49,6 +49,7 @@
                 <button class="tab-btn" data-viz="progressive">⟶ Progressive</button>
                 <button class="tab-btn" data-viz="tree">🌳 Arbre</button>
                 <button class="tab-btn" data-viz="sunburst">☀ Sunburst</button>
+                <button class="tab-btn" data-viz="proptree">⟂ Propriétés</button>
             </div>
             <div class="toolbar-right">
                 <label style="display:flex;align-items:center;gap:6px">

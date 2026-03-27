@@ -7,8 +7,9 @@
         currentViz: 'radial',
         currentRoot: null,       // URI or null
         currentRootLabel: 'Racine',
+        currentRootType: 'class', // 'class' or 'property'
         depth: 3,
-        history: [],             // breadcrumb stack [{uri, label}]
+        history: [],             // breadcrumb stack [{uri, label, type}]
     };
 
     const COLOR_PALETTE = [
@@ -71,11 +72,11 @@
         li.addEventListener('click', () => {
             const uri = li.dataset.uri;
             const label = li.textContent.trim();
-            state.currentViz = 'progressive';
+            state.currentViz = 'proptree';
             document.querySelectorAll('.tab-btn').forEach(b => {
-                b.classList.toggle('active', b.dataset.viz === 'progressive');
+                b.classList.toggle('active', b.dataset.viz === 'proptree');
             });
-            navigateTo(uri, label);
+            navigateTo(uri, label, 'property');
         });
     });
 
@@ -93,12 +94,13 @@
     });
 
     // ── Navigation ────────────────────────────────────────────────────────────
-    function navigateTo(uri, label) {
+    function navigateTo(uri, label, type = 'class') {
         if (state.currentRoot) {
-            state.history.push({ uri: state.currentRoot, label: state.currentRootLabel });
+            state.history.push({ uri: state.currentRoot, label: state.currentRootLabel, type: state.currentRootType });
         }
         state.currentRoot = uri;
         state.currentRootLabel = label;
+        state.currentRootType = type;
         updateBreadcrumb();
         render();
     }
@@ -128,6 +130,7 @@
             s.addEventListener('click', () => {
                 state.currentRoot = h.uri;
                 state.currentRootLabel = h.label;
+                state.currentRootType = h.type || 'class';
                 state.history = state.history.slice(0, i);
                 updateBreadcrumb();
                 render();
@@ -184,12 +187,17 @@
             ? '?root=' + encodeURIComponent(state.currentRoot) + '&depth=' + state.depth
             : '?depth=' + state.depth;
 
+        // If current root is a property, use property API for hierarchy-based views
+        const isProperty = state.currentRootType === 'property';
+        const hierarchyApi = isProperty ? '/api/properties' : '/api/hierarchy';
+
         switch (state.currentViz) {
-            case 'radial':      fetch('/api/hierarchy' + rootParam).then(r=>r.json()).then(drawRadial); break;
-            case 'packing':     fetch('/api/hierarchy' + rootParam).then(r=>r.json()).then(drawPacking); break;
+            case 'radial':      fetch(hierarchyApi + rootParam).then(r=>r.json()).then(drawRadial); break;
+            case 'packing':     fetch(hierarchyApi + rootParam).then(r=>r.json()).then(drawPacking); break;
             case 'progressive': fetch('/api/progressive' + rootParam).then(r=>r.json()).then(drawProgressive); break;
-            case 'tree':        fetch('/api/hierarchy' + rootParam).then(r=>r.json()).then(drawTree); break;
-            case 'sunburst':    fetch('/api/hierarchy' + rootParam).then(r=>r.json()).then(drawSunburst); break;
+            case 'tree':        fetch(hierarchyApi + rootParam).then(r=>r.json()).then(drawTree); break;
+            case 'sunburst':    fetch(hierarchyApi + rootParam).then(r=>r.json()).then(drawSunburst); break;
+            case 'proptree':    fetch('/api/properties' + rootParam).then(r=>r.json()).then(drawPropTree); break;
         }
     }
 
@@ -561,6 +569,170 @@
             .text(d => d.data.label.slice(0, 12));
 
         svg.call(d3.zoom().scaleExtent([0.3, 4]).on('zoom', e => g.attr('transform', `translate(${cx + e.transform.x},${cy + e.transform.y}) scale(${e.transform.k})`)));
+    }
+
+    // ── 6. PROPERTY TREE (hiérarchie des propriétés OWL) ─────────────────────
+    function drawPropTree(data) {
+        if (!data || (!data.children && !data.id)) {
+            // No sub-properties: show info message
+            const g = svg.append('g');
+            g.append('text')
+                .attr('x', W() / 2).attr('y', H() / 2 - 20)
+                .attr('text-anchor', 'middle')
+                .attr('font-size', 16)
+                .attr('fill', 'var(--text)')
+                .text('Cette propriété n\'a pas de sous-propriétés OWL.');
+            g.append('text')
+                .attr('x', W() / 2).attr('y', H() / 2 + 15)
+                .attr('text-anchor', 'middle')
+                .attr('font-size', 12)
+                .attr('fill', 'var(--muted)')
+                .text('(aucun rdfs:subPropertyOf déclaré)');
+            return;
+        }
+
+        const w = W(), h = H();
+        const margin = { top: 40, right: 160, bottom: 20, left: 100 };
+        const iw = w - margin.left - margin.right;
+        const ih = h - margin.top - margin.bottom;
+
+        const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+        // Title badge
+        svg.append('text')
+            .attr('x', margin.left).attr('y', 22)
+            .attr('font-size', 13)
+            .attr('font-weight', 700)
+            .attr('fill', 'var(--accent2)')
+            .text('⟂ Hiérarchie de propriété : ' + (data.label || data.id));
+
+        const root = d3.hierarchy(data);
+        root.x0 = ih / 2;
+        root.y0 = 0;
+
+        // Color by property type
+        function propColor(node) {
+            const t = node.data.type || '';
+            if (t.includes('ObjectProperty'))   return '#5bc8f5';
+            if (t.includes('DatatypeProperty')) return '#f5a623';
+            if (t.includes('AnnotationProperty')) return '#e056fd';
+            return '#7ee8a2';
+        }
+
+        let nodeId = 0;
+        function update(source) {
+            const treeLayout = d3.tree().size([ih, iw]);
+            treeLayout(root);
+
+            const nodes = root.descendants();
+            const nodeUpd = g.selectAll('.ptree-node')
+                .data(nodes, d => d.id || (d.id = ++nodeId));
+
+            const nodeEnter = nodeUpd.enter().append('g')
+                .attr('class', 'ptree-node')
+                .attr('transform', `translate(${source.y0},${source.x0})`)
+                .style('cursor', 'pointer')
+                .on('click', (e, d) => {
+                    if (e.shiftKey || (!d.children && !d._children)) {
+                        if (d.data.uri) navigateTo(d.data.uri, d.data.label, 'property');
+                        showPropInfo(d.data);
+                        return;
+                    }
+                    if (d.children) { d._children = d.children; d.children = null; }
+                    else { d.children = d._children; d._children = null; }
+                    update(d);
+                });
+
+            // Diamond shape for properties
+            nodeEnter.append('polygon')
+                .attr('points', '0,-10 10,0 0,10 -10,0')
+                .attr('fill', d => propColor(d))
+                .attr('fill-opacity', 0.85)
+                .attr('stroke', d => propColor(d))
+                .attr('stroke-width', 2);
+
+            nodeEnter.append('text')
+                .attr('dy', '0.35em')
+                .attr('x', d => d.children || d._children ? -16 : 16)
+                .attr('text-anchor', d => d.children || d._children ? 'end' : 'start')
+                .attr('font-size', 11)
+                .attr('fill', 'var(--text)')
+                .text(d => d.data.label || d.data.id);
+
+            // Type badge
+            nodeEnter.append('text')
+                .attr('dy', '1.6em')
+                .attr('x', d => d.children || d._children ? -16 : 16)
+                .attr('text-anchor', d => d.children || d._children ? 'end' : 'start')
+                .attr('font-size', 9)
+                .attr('fill', 'var(--muted)')
+                .text(d => {
+                    const t = d.data.type || '';
+                    if (t.includes('ObjectProperty'))   return 'ObjectProperty';
+                    if (t.includes('DatatypeProperty')) return 'DatatypeProperty';
+                    if (t.includes('AnnotationProperty')) return 'AnnotationProperty';
+                    return 'rdf:Property';
+                });
+
+            const nodeAll = nodeEnter.merge(nodeUpd);
+            nodeAll.transition().duration(400)
+                .attr('transform', d => `translate(${d.y},${d.x})`);
+
+            nodeUpd.exit().transition().duration(400)
+                .attr('transform', `translate(${source.y},${source.x})`).remove();
+
+            // Links
+            const links = root.links();
+            const linkSel = g.selectAll('.ptree-link').data(links, d => d.target.id);
+            const linkEnter = linkSel.enter().insert('path', 'g')
+                .attr('class', 'ptree-link link')
+                .attr('stroke', '#5bc8f5')
+                .attr('stroke-dasharray', '5,3')
+                .attr('d', () => {
+                    const o = { x: source.x0, y: source.y0 };
+                    return diagonal(o, o);
+                });
+            linkEnter.merge(linkSel).transition().duration(400)
+                .attr('d', d => diagonal(d.source, d.target));
+            linkSel.exit().transition().duration(400)
+                .attr('d', () => { const o = { x: source.x, y: source.y }; return diagonal(o, o); }).remove();
+
+            nodes.forEach(d => { d.x0 = d.x; d.y0 = d.y; });
+        }
+
+        function diagonal(s, t) {
+            return `M${s.y},${s.x}C${(s.y + t.y) / 2},${s.x} ${(s.y + t.y) / 2},${t.x} ${t.y},${t.x}`;
+        }
+
+        update(root);
+        svg.call(d3.zoom().scaleExtent([0.2, 4]).on('zoom', e =>
+            g.attr('transform', `translate(${margin.left + e.transform.x},${margin.top + e.transform.y}) scale(${e.transform.k})`)));
+    }
+
+    function showPropInfo(propData) {
+        infoTitle.textContent = propData.label || propData.id;
+        const t = propData.type || 'rdf:Property';
+        const typeShort = t.includes('ObjectProperty') ? 'ObjectProperty'
+            : t.includes('DatatypeProperty') ? 'DatatypeProperty'
+            : t.includes('AnnotationProperty') ? 'AnnotationProperty' : 'rdf:Property';
+        infoComment.textContent = propData.comment || '(pas de description)';
+        infoProps.innerHTML = '';
+
+        const details = [
+            ['Type OWL', typeShort],
+            ['Domaine', propData.domain ? propData.domain.split(/[#/]/).pop() : '—'],
+            ['Portée (range)', propData.range ? propData.range.split(/[#/]/).pop() : '—'],
+            ['Sous-propriété de', propData.subPropertyOf?.length ? propData.subPropertyOf.map(u => u.split(/[#/]/).pop()).join(', ') : '—'],
+        ];
+
+        details.forEach(([k, v]) => {
+            const d = document.createElement('div');
+            d.className = 'info-prop';
+            d.innerHTML = `<span>${k}</span> → ${v}`;
+            infoProps.appendChild(d);
+        });
+
+        infoPanel.style.display = 'block';
     }
 
     // ── Initial render ────────────────────────────────────────────────────────
