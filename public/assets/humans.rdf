@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE rdf [
+   <!ENTITY humans   "http://www.inria.fr/2007/09/11/humans.rdfs"> 
+   <!ENTITY rdfs     "http://www.w3.org/2000/01/rdf-schema">
+    ]>
+<rdf:RDF  
+   xmlns:rdf ="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+   xmlns     ="http://www.w3.org/2000/01/rdf-schema#" 
+   xml:base  ="http://www.inria.fr/2007/09/11/humans.rdfs" >
+<rdfs:Class rdf:ID="Animal">
+  <rdfs:label xml:lang="en">animal</rdfs:label>
+  <rdfs:comment xml:lang="en">a living organism characterized by voluntary movement.</rdfs:comment>
+</rdfs:Class>
+<rdfs:Class rdf:ID="Male">
+  <rdfs:subClassOf rdf:resource="#Animal"/>
+  <rdfs:label xml:lang="en">male</rdfs:label>
+  <rdfs:comment xml:lang="en">an animal that produces gametes (spermatozoa) that can fertilize female gametes (ova).</rdfs:comment>
+</rdfs:Class>
+<rdfs:Class rdf:ID="Female">
+  <rdfs:subClassOf rdf:resource="#Animal"/>
+  <rdfs:label xml:lang="en">female</rdfs:label>
+  <rdfs:comment xml:lang="en">an animal that produces gametes (ova) that can be fertilized by male gametes (spermatozoa).</rdfs:comment>
+</rdfs:Class>
+<rdfs:Class rdf:ID="Person">
+  <rdfs:subClassOf rdf:resource="#Animal"/>
+  <rdfs:label xml:lang="en">person</rdfs:label>
+  <rdfs:comment xml:lang="en">a member of the human species</rdfs:comment>
+</rdfs:Class>
+<rdfs:Class rdf:ID="Man">
+  <rdfs:subClassOf rdf:resource="#Person"/>
+  <rdfs:subClassOf rdf:resource="#Male"/>
+  <rdfs:label xml:lang="en">man</rdfs:label>
+  <rdfs:comment xml:lang="en">an adult male person</rdfs:comment>
+</rdfs:Class>
+<rdfs:Class rdf:ID="Woman">
+  <rdfs:subClassOf rdf:resource="#Person"/>
+  <rdfs:subClassOf rdf:resource="#Female"/>
+  <rdfs:label xml:lang="en">woman</rdfs:label>
+  <rdfs:comment xml:lang="en">an adult female person</rdfs:comment>
+</rdfs:Class>
+<rdfs:Class rdf:ID="Lecturer">
+  <rdfs:subClassOf rdf:resource="#Person"/>
+  <rdfs:label xml:lang="en">lecturer</rdfs:label>
+  <rdfs:comment xml:lang="en">someone who lectures professionally</rdfs:comment>
+</rdfs:Class>
+<rdfs:Class rdf:ID="Researcher">
+  <rdfs:subClassOf rdf:resource="#Person"/>
+  <rdfs:label xml:lang="en">researcher</rdfs:label>
+  <rdfs:comment xml:lang="en">a person who devotes himself to doing research</rdfs:comment>
+</rdfs:Class>
+<rdf:Property rdf:ID="hasAncestor">
+  <rdfs:domain rdf:resource="#Animal"/>
+  <rdfs:range rdf:resource="#Animal"/>
+  <rdfs:label xml:lang="en">has for ancestor</rdfs:label>
+  <rdfs:comment xml:lang="en">relation between an animal and another animal from which it is descended.</rdfs:comment>
+</rdf:Property>
+<rdf:Property rdf:ID="hasParent">
+  <rdfs:subPropertyOf rdf:resource="#hasAncestor"/>
+  <rdfs:label xml:lang="en">has for parent</rdfs:label>
+  <rdfs:comment xml:lang="en">relation between an animal and another animal which gave birth to it.</rdfs:comment>
+</rdf:Property>
+<rdf:Property rdf:ID="hasFather">
+  <rdfs:subPropertyOf rdf:resource="#hasParent"/>
+  <rdfs:range rdf:resource="#Male"/>
+  <rdfs:label xml:lang="en">has for father</rdfs:label>
+  <rdfs:comment xml:lang="en">to have for parent a male.</rdfs:comment>
+</rdf:Property>
+<rdf:Property rdf:ID="hasMother">
+  <rdfs:subPropertyOf rdf:resource="#hasParent"/>
+  <rdfs:range rdf:resource="#Female"/>
+  <rdfs:label xml:lang="en">has for mother</rdfs:label>
+  <rdfs:comment xml:lang="en">to have for parent a female.</rdfs:comment>
+</rdf:Property>
+<rdf:Property rdf:ID="hasChild">
+  <rdfs:label xml:lang="en">has for child</rdfs:label>
+  <rdfs:comment xml:lang="en">relation between an animal and another animal to which it gave birth.</rdfs:comment>
+</rdf:Property>
+<rdf:Property rdf:ID="hasBrother">
+  <rdfs:domain rdf:resource="#Animal"/>
+  <rdfs:range rdf:resource="#Male"/>
+  <rdfs:label xml:lang="en">has for brother</rdfs:label>
+  <rdfs:comment xml:lang="en">relation with a male who has the same parents.</rdfs:comment>
+</rdf:Property>
+<rdf:Property rdf:ID="hasSister">
+  <rdfs:domain rdf:resource="#Animal"/>
+  <rdfs:range rdf:resource="#Female"/>
+  <rdfs:label xml:lang="en">has for sister</rdfs:label>
+  <rdfs:comment xml:lang="en">relation with a female who has the same parents.</rdfs:comment>
+</rdf:Property>
+<rdf:Property rdf:ID="hasFriend">
+  <rdfs:domain rdf:resource="#Person"/>
+  <rdfs:range rdf:resource="#Person"/>
+  <rdfs:label xml:lang="en">has for friend</rdfs:label>
+  <rdfs:comment xml:lang="en">relation between a person and another person he or she knows well.</rdfs:comment>
+</rdf:Property>
+<rdf:Property rdf:ID="hasSpouse">
+  <rdfs:domain rdf:resource="#Person"/>
+  <rdfs:range rdf:resource="#Person"/>
+  <rdfs:label xml:lang="en">has for spouse</rdfs:label>
+  <rdfs:comment xml:lang="en">a person's partner in marriage.</rdfs:comment>
+</rdf:Property>
+<rdf:Property rdf:ID="name">
+  <rdfs:label xml:lang="en">name</rdfs:label>
+  <rdfs:comment xml:lang="en">designation of something.</rdfs:comment>
+</rdf:Property>
+<rdf:Property rdf:ID="age">
+  <rdfs:label xml:lang="en">age</rdfs:label>
+  <rdfs:comment xml:lang="en">complete existence duration.</rdfs:comment>
+</rdf:Property>
+<rdf:Property rdf:ID="shoesize">
+  <rdfs:domain rdf:resource="#Person"/>
+  <rdfs:label xml:lang="en">shoe size</rdfs:label>
+  <rdfs:comment xml:lang="en">express in some way the approximate length of the shoes for a person.</rdfs:comment>
+</rdf:Property>
+</rdf:RDF>
