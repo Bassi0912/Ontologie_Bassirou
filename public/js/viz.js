@@ -1,4 +1,4 @@
-/* OntoViz - D3.js Visualizations */
+/* OntoViz - D3.js Visualizations with violet theme */
 (function () {
     if (!document.getElementById('vizSvg')) return; // not on viz page
 
@@ -12,10 +12,15 @@
         history: [],             // breadcrumb stack [{uri, label, type}]
     };
 
-const COLOR_PALETTE = [
-    '#e0bbff', '#d19aff', '#b66dff', '#9933ff', '#7a00e6',
-    '#5c00b3', '#3e0080', '#2a0066', '#1a0040', '#0d0020'
-];
+    // ── Colors from CSS ───────────────────────────────────────────────────────
+    const rootStyles = getComputedStyle(document.documentElement);
+    const violet      = rootStyles.getPropertyValue('--teal').trim() || '#9933ff';
+    const violetLight = rootStyles.getPropertyValue('--cyan').trim() || '#b66dff';
+
+    const COLOR_PALETTE = [
+        '#e0bbff', '#d19aff', '#b66dff', '#9933ff', '#7a00e6',
+        '#5c00b3', '#3e0080', '#2a0066', '#1a0040', '#0d0020'
+    ];
 
     // ── DOM refs ──────────────────────────────────────────────────────────────
     const svg         = d3.select('#vizSvg');
@@ -61,22 +66,19 @@ const COLOR_PALETTE = [
     });
 
     // ── Sidebar clicks ────────────────────────────────────────────────────────
-    document.querySelectorAll('.concept-item').forEach(li => {
+    document.querySelectorAll('.concept-item, .prop-item').forEach(li => {
         li.addEventListener('click', () => {
-            const uri = li.dataset.uri;
+            const uri   = li.dataset.uri;
             const label = li.textContent.trim();
-            navigateTo(uri, label);
-        });
-    });
-    document.querySelectorAll('.prop-item').forEach(li => {
-        li.addEventListener('click', () => {
-            const uri = li.dataset.uri;
-            const label = li.textContent.trim();
-            state.currentViz = 'proptree';
-            document.querySelectorAll('.tab-btn').forEach(b => {
-                b.classList.toggle('active', b.dataset.viz === 'proptree');
-            });
-            navigateTo(uri, label, 'property');
+            if (li.classList.contains('prop-item')) {
+                state.currentViz = 'proptree';
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.toggle('active', b.dataset.viz === 'proptree');
+                });
+                navigateTo(uri, label, 'property');
+            } else {
+                navigateTo(uri, label);
+            }
         });
     });
 
@@ -98,9 +100,9 @@ const COLOR_PALETTE = [
         if (state.currentRoot) {
             state.history.push({ uri: state.currentRoot, label: state.currentRootLabel, type: state.currentRootType });
         }
-        state.currentRoot = uri;
+        state.currentRoot      = uri;
         state.currentRootLabel = label;
-        state.currentRootType = type;
+        state.currentRootType  = type;
         updateBreadcrumb();
         render();
     }
@@ -108,12 +110,12 @@ const COLOR_PALETTE = [
     function updateBreadcrumb() {
         breadcrumb.innerHTML = '';
         const rootSpan = document.createElement('span');
-        rootSpan.className = 'bc-item';
+        rootSpan.className   = 'bc-item';
         rootSpan.textContent = 'Racine';
         rootSpan.addEventListener('click', () => {
-            state.currentRoot = null;
+            state.currentRoot      = null;
             state.currentRootLabel = 'Racine';
-            state.history = [];
+            state.history          = [];
             updateBreadcrumb();
             render();
         });
@@ -121,17 +123,18 @@ const COLOR_PALETTE = [
 
         state.history.forEach((h, i) => {
             const sep = document.createElement('span');
-            sep.textContent = ' › ';
-            sep.style.color = 'var(--muted)';
+            sep.textContent   = ' › ';
+            sep.style.color   = 'var(--muted)';
             breadcrumb.appendChild(sep);
+
             const s = document.createElement('span');
-            s.className = 'bc-item';
+            s.className   = 'bc-item';
             s.textContent = h.label;
             s.addEventListener('click', () => {
-                state.currentRoot = h.uri;
+                state.currentRoot      = h.uri;
                 state.currentRootLabel = h.label;
-                state.currentRootType = h.type || 'class';
-                state.history = state.history.slice(0, i);
+                state.currentRootType  = h.type || 'class';
+                state.history          = state.history.slice(0, i);
                 updateBreadcrumb();
                 render();
             });
@@ -143,8 +146,9 @@ const COLOR_PALETTE = [
             sep.textContent = ' › ';
             sep.style.color = 'var(--muted)';
             breadcrumb.appendChild(sep);
+
             const s = document.createElement('span');
-            s.className = 'bc-item';
+            s.className   = 'bc-item';
             s.textContent = state.currentRootLabel;
             s.style.color = 'var(--text)';
             breadcrumb.appendChild(s);
@@ -152,9 +156,9 @@ const COLOR_PALETTE = [
     }
 
     function showInfo(label, comment, uri) {
-        infoTitle.textContent = label;
+        infoTitle.textContent   = label;
         infoComment.textContent = comment || '(pas de description)';
-        infoProps.innerHTML = '';
+        infoProps.innerHTML     = '';
 
         if (uri) {
             fetch('/api/concept?uri=' + encodeURIComponent(uri))
@@ -166,9 +170,9 @@ const COLOR_PALETTE = [
                         infoProps.appendChild(h4);
                         data.properties.forEach(p => {
                             const d = document.createElement('div');
-                            d.className = 'info-prop';
-                            const rShort = p.range ? p.range.split(/[#/]/).pop() : '?';
-                            d.innerHTML = `<span>${p.label}</span> → ${rShort}`;
+                            d.className   = 'info-prop';
+                            const rShort  = p.range ? p.range.split(/[#/]/).pop() : '?';
+                            d.innerHTML   = `<span>${p.label}</span> → ${rShort}`;
                             infoProps.appendChild(d);
                         });
                     }
@@ -187,16 +191,15 @@ const COLOR_PALETTE = [
             ? '?root=' + encodeURIComponent(state.currentRoot) + '&depth=' + state.depth
             : '?depth=' + state.depth;
 
-        // If current root is a property, use property API for hierarchy-based views
-        const isProperty = state.currentRootType === 'property';
+        const isProperty   = state.currentRootType === 'property';
         const hierarchyApi = isProperty ? '/api/properties' : '/api/hierarchy';
 
         switch (state.currentViz) {
-            case 'radial':      fetch(hierarchyApi + rootParam).then(r=>r.json()).then(drawRadial); break;
-            case 'packing':     fetch(hierarchyApi + rootParam).then(r=>r.json()).then(drawPacking); break;
+            case 'radial':      fetch(hierarchyApi + rootParam).then(r=>r.json()).then(drawRadial);      break;
+            case 'packing':     fetch(hierarchyApi + rootParam).then(r=>r.json()).then(drawPacking);     break;
             case 'progressive': fetch('/api/progressive' + rootParam).then(r=>r.json()).then(drawProgressive); break;
-            case 'tree':        fetch(hierarchyApi + rootParam).then(r=>r.json()).then(drawTree); break;
-            case 'sunburst':    fetch(hierarchyApi + rootParam).then(r=>r.json()).then(drawSunburst); break;
+            case 'tree':        fetch(hierarchyApi + rootParam).then(r=>r.json()).then(drawTree);        break;
+            case 'sunburst':    fetch(hierarchyApi + rootParam).then(r=>r.json()).then(drawSunburst);    break;
             case 'proptree':    fetch('/api/properties' + rootParam).then(r=>r.json()).then(drawPropTree); break;
         }
     }
@@ -211,7 +214,7 @@ const COLOR_PALETTE = [
             .sort((a, b) => a.data.label?.localeCompare(b.data.label));
 
         const maxDepth = root.height || 1;
-        const ringGap = Math.min(w, h) / 2 / (maxDepth + 1.5);
+        const ringGap  = Math.min(w, h) / 2 / (maxDepth + 1.5);
 
         const g = svg.append('g').attr('transform', `translate(${cx},${cy})`);
 
@@ -232,7 +235,7 @@ const COLOR_PALETTE = [
         });
 
         function getColor(node) {
-            if (node.depth === 0) return 'var(--accent)';
+            if (node.depth === 0) return violet;
             let n = node;
             while (n.depth > 1) n = n.parent;
             return colorMap[n.data.id] || COLOR_PALETTE[0];
@@ -242,19 +245,19 @@ const COLOR_PALETTE = [
         root.each(node => {
             if (node.depth === 0) { node.x = 0; node.y = 0; return; }
 
-            const siblings = node.parent.children;
-            const idx = siblings.indexOf(node);
-            const total = siblings.length;
+            const siblings    = node.parent.children;
+            const idx         = siblings.indexOf(node);
+            const total       = siblings.length;
             const parentAngle = node.parent._angle ?? 0;
-            const spread = node.parent.depth === 0 ? Math.PI * 2 : Math.PI * 0.8;
-            const angle = parentAngle - spread / 2 + (spread / Math.max(total - 1, 1)) * idx;
+            const spread      = node.parent.depth === 0 ? Math.PI * 2 : Math.PI * 0.8;
+            const angle       = parentAngle - spread / 2 + (spread / Math.max(total - 1, 1)) * idx;
             node._angle = angle;
             node.x = Math.cos(angle) * node.depth * ringGap;
             node.y = Math.sin(angle) * node.depth * ringGap;
         });
 
         // Edges
-        const link = g.selectAll('.radial-link')
+        g.selectAll('.radial-link')
             .data(root.links())
             .join('line')
             .attr('class', 'radial-link')
@@ -292,10 +295,11 @@ const COLOR_PALETTE = [
             .text(d => d.data.label);
 
         // Zoom
-        svg.call(d3.zoom().scaleExtent([0.3, 4]).on('zoom', e => g.attr('transform', `translate(${cx + e.transform.x},${cy + e.transform.y}) scale(${e.transform.k})`)));
+        svg.call(d3.zoom().scaleExtent([0.3, 4]).on('zoom', e =>
+            g.attr('transform', `translate(${cx + e.transform.x},${cy + e.transform.y}) scale(${e.transform.k})`)));
     }
 
-    // ── 2. CIRCLE PACKING (coupe) ─────────────────────────────────────────────
+    // ── 2. CIRCLE PACKING ────────────────────────────────────────────────────
     function drawPacking(data) {
         if (!data) return;
         const w = W(), h = H();
@@ -311,6 +315,7 @@ const COLOR_PALETTE = [
         (root.children || []).forEach((c, i) => {
             colorMap[c.data.id] = COLOR_PALETTE[i % COLOR_PALETTE.length];
         });
+
         function col(node) {
             if (node.depth === 0) return 'var(--surface2)';
             let n = node; while (n.depth > 1) n = n.parent;
@@ -344,7 +349,8 @@ const COLOR_PALETTE = [
             .attr('font-size', d => Math.min(12, d.r / 3))
             .style('pointer-events', 'none');
 
-        svg.call(d3.zoom().scaleExtent([0.3, 8]).on('zoom', e => g.attr('transform', `translate(${10 + e.transform.x},${10 + e.transform.y}) scale(${e.transform.k})`)));
+        svg.call(d3.zoom().scaleExtent([0.3, 8]).on('zoom', e =>
+            g.attr('transform', `translate(${10 + e.transform.x},${10 + e.transform.y}) scale(${e.transform.k})`)));
     }
 
     // ── 3. PROGRESSIVE (force graph) ─────────────────────────────────────────
@@ -360,14 +366,14 @@ const COLOR_PALETTE = [
             .attr('refX', 20).attr('refY', 0)
             .attr('markerWidth', 6).attr('markerHeight', 6)
             .attr('orient', 'auto')
-            .append('path').attr('d', 'M0,-5L10,0L0,5').attr('fill', 'var(--accent2)');
+            .append('path').attr('d', 'M0,-5L10,0L0,5').attr('fill', violetLight);
 
         const g = svg.append('g');
 
         const simulation = d3.forceSimulation(nodes)
-            .force('link', d3.forceLink(links).id(d => d.id).distance(d => d.type === 'hierarchy' ? 80 : 150).strength(0.5))
-            .force('charge', d3.forceManyBody().strength(-200))
-            .force('center', d3.forceCenter(w / 2, h / 2))
+            .force('link',      d3.forceLink(links).id(d => d.id).distance(d => d.type === 'hierarchy' ? 80 : 150).strength(0.5))
+            .force('charge',    d3.forceManyBody().strength(-200))
+            .force('center',    d3.forceCenter(w / 2, h / 2))
             .force('collision', d3.forceCollide(30));
 
         const link = g.selectAll('.prog-link')
@@ -382,6 +388,9 @@ const COLOR_PALETTE = [
             .attr('class', 'link-label')
             .text(d => d.label);
 
+        const colorIdx = {};
+        nodes.forEach((n, i) => { colorIdx[n.id] = COLOR_PALETTE[i % COLOR_PALETTE.length]; });
+
         const node = g.selectAll('.prog-node')
             .data(nodes)
             .join('g')
@@ -395,9 +404,6 @@ const COLOR_PALETTE = [
                 if (d.uri) navigateTo(d.uri, d.label);
                 showInfo(d.label, d.comment, d.uri);
             });
-
-        const colorIdx = {};
-        nodes.forEach((n, i) => { colorIdx[n.id] = COLOR_PALETTE[i % COLOR_PALETTE.length]; });
 
         node.append('circle')
             .attr('r', 18)
@@ -430,7 +436,7 @@ const COLOR_PALETTE = [
         const w = W(), h = H();
         const margin = { top: 20, right: 120, bottom: 20, left: 80 };
         const iw = w - margin.left - margin.right;
-        const ih = h - margin.top - margin.bottom;
+        const ih = h - margin.top  - margin.bottom;
 
         const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
@@ -438,18 +444,16 @@ const COLOR_PALETTE = [
         root.x0 = ih / 2;
         root.y0 = 0;
 
-        // Collapse all except first level
         root.children?.forEach(c => c.children?.forEach(collapse));
 
-        function collapse(d) { if (d.children) { d._children = d.children; d._children.forEach(collapse); d.children = null; } }
-        function expand(d)   { if (d._children) { d.children = d._children; d.children.forEach(expand); d._children = null; } }
+        function collapse(d) { if (d.children)  { d._children = d.children; d._children.forEach(collapse); d.children = null; } }
 
         let i = 0;
         function update(source) {
             const treeLayout = d3.tree().size([ih, iw]);
             treeLayout(root);
 
-            const nodes = root.descendants();
+            const nodes    = root.descendants();
             const nodeUpdate = g.selectAll('.tree-node')
                 .data(nodes, d => d.id || (d.id = ++i));
 
@@ -458,20 +462,20 @@ const COLOR_PALETTE = [
                 .attr('transform', d => `translate(${source.y0},${source.x0})`)
                 .style('cursor', 'pointer')
                 .on('click', (e, d) => {
-                    if (e.shiftKey || !d.children && !d._children) {
+                    if (e.shiftKey || (!d.children && !d._children)) {
                         if (d.data.uri) navigateTo(d.data.uri, d.data.label);
                         showInfo(d.data.label, d.data.comment, d.data.uri);
                         return;
                     }
                     if (d.children) { d._children = d.children; d.children = null; }
-                    else { d.children = d._children; d._children = null; }
+                    else             { d.children = d._children; d._children = null; }
                     update(d);
                 });
 
             nodeEnter.append('circle')
                 .attr('r', 7)
-                .attr('fill', d => d._children ? 'var(--accent)' : (d.children ? 'var(--accent2)' : 'var(--surface2)'))
-                .attr('stroke', d => d._children || d.children ? 'var(--accent)' : 'var(--border)')
+                .attr('fill', d => d._children ? violet : (d.children ? violetLight : 'var(--surface2)'))
+                .attr('stroke', d => d._children || d.children ? violet : 'var(--border)')
                 .attr('stroke-width', 2);
 
             nodeEnter.append('text')
@@ -486,13 +490,13 @@ const COLOR_PALETTE = [
             nodeAll.transition().duration(400)
                 .attr('transform', d => `translate(${d.y},${d.x})`);
             nodeAll.select('circle')
-                .attr('fill', d => d._children ? 'var(--accent)' : (d.children ? 'var(--accent2)' : 'var(--surface2)'));
+                .attr('fill', d => d._children ? violet : (d.children ? violetLight : 'var(--surface2)'));
 
             nodeUpdate.exit().transition().duration(400)
                 .attr('transform', `translate(${source.y},${source.x})`).remove();
 
             // Links
-            const links = root.links();
+            const links   = root.links();
             const linkSel = g.selectAll('.tree-link').data(links, d => d.target.id);
             const linkEnter = linkSel.enter().insert('path', 'g')
                 .attr('class', 'tree-link link')
@@ -501,7 +505,8 @@ const COLOR_PALETTE = [
                     return diagonal(o, o);
                 });
             linkEnter.merge(linkSel).transition().duration(400).attr('d', d => diagonal(d.source, d.target));
-            linkSel.exit().transition().duration(400).attr('d', () => { const o = { x: source.x, y: source.y }; return diagonal(o, o); }).remove();
+            linkSel.exit().transition().duration(400)
+                .attr('d', () => { const o = { x: source.x, y: source.y }; return diagonal(o, o); }).remove();
 
             nodes.forEach(d => { d.x0 = d.x; d.y0 = d.y; });
         }
@@ -511,7 +516,8 @@ const COLOR_PALETTE = [
         }
 
         update(root);
-        svg.call(d3.zoom().scaleExtent([0.2, 4]).on('zoom', e => g.attr('transform', `translate(${margin.left + e.transform.x},${margin.top + e.transform.y}) scale(${e.transform.k})`)));
+        svg.call(d3.zoom().scaleExtent([0.2, 4]).on('zoom', e =>
+            g.attr('transform', `translate(${margin.left + e.transform.x},${margin.top + e.transform.y}) scale(${e.transform.k})`)));
     }
 
     // ── 5. SUNBURST ───────────────────────────────────────────────────────────
@@ -568,13 +574,13 @@ const COLOR_PALETTE = [
             .attr('font-size', 10)
             .text(d => d.data.label.slice(0, 12));
 
-        svg.call(d3.zoom().scaleExtent([0.3, 4]).on('zoom', e => g.attr('transform', `translate(${cx + e.transform.x},${cy + e.transform.y}) scale(${e.transform.k})`)));
+        svg.call(d3.zoom().scaleExtent([0.3, 4]).on('zoom', e =>
+            g.attr('transform', `translate(${cx + e.transform.x},${cy + e.transform.y}) scale(${e.transform.k})`)));
     }
 
     // ── 6. PROPERTY TREE (hiérarchie des propriétés OWL) ─────────────────────
     function drawPropTree(data) {
         if (!data || (!data.children && !data.id)) {
-            // No sub-properties: show info message
             const g = svg.append('g');
             g.append('text')
                 .attr('x', W() / 2).attr('y', H() / 2 - 20)
@@ -594,7 +600,7 @@ const COLOR_PALETTE = [
         const w = W(), h = H();
         const margin = { top: 40, right: 160, bottom: 20, left: 100 };
         const iw = w - margin.left - margin.right;
-        const ih = h - margin.top - margin.bottom;
+        const ih = h - margin.top  - margin.bottom;
 
         const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
@@ -603,18 +609,17 @@ const COLOR_PALETTE = [
             .attr('x', margin.left).attr('y', 22)
             .attr('font-size', 13)
             .attr('font-weight', 700)
-            .attr('fill', 'var(--accent2)')
+            .attr('fill', violetLight)
             .text('⟂ Hiérarchie de propriété : ' + (data.label || data.id));
 
         const root = d3.hierarchy(data);
         root.x0 = ih / 2;
         root.y0 = 0;
 
-        // Color by property type
         function propColor(node) {
             const t = node.data.type || '';
-            if (t.includes('ObjectProperty'))   return '#5bc8f5';
-            if (t.includes('DatatypeProperty')) return '#f5a623';
+            if (t.includes('ObjectProperty'))     return '#5bc8f5';
+            if (t.includes('DatatypeProperty'))   return '#f5a623';
             if (t.includes('AnnotationProperty')) return '#e056fd';
             return '#7ee8a2';
         }
@@ -624,7 +629,7 @@ const COLOR_PALETTE = [
             const treeLayout = d3.tree().size([ih, iw]);
             treeLayout(root);
 
-            const nodes = root.descendants();
+            const nodes  = root.descendants();
             const nodeUpd = g.selectAll('.ptree-node')
                 .data(nodes, d => d.id || (d.id = ++nodeId));
 
@@ -639,7 +644,7 @@ const COLOR_PALETTE = [
                         return;
                     }
                     if (d.children) { d._children = d.children; d.children = null; }
-                    else { d.children = d._children; d._children = null; }
+                    else             { d.children = d._children; d._children = null; }
                     update(d);
                 });
 
@@ -668,8 +673,8 @@ const COLOR_PALETTE = [
                 .attr('fill', 'var(--muted)')
                 .text(d => {
                     const t = d.data.type || '';
-                    if (t.includes('ObjectProperty'))   return 'ObjectProperty';
-                    if (t.includes('DatatypeProperty')) return 'DatatypeProperty';
+                    if (t.includes('ObjectProperty'))     return 'ObjectProperty';
+                    if (t.includes('DatatypeProperty'))   return 'DatatypeProperty';
                     if (t.includes('AnnotationProperty')) return 'AnnotationProperty';
                     return 'rdf:Property';
                 });
@@ -682,11 +687,11 @@ const COLOR_PALETTE = [
                 .attr('transform', `translate(${source.y},${source.x})`).remove();
 
             // Links
-            const links = root.links();
+            const links   = root.links();
             const linkSel = g.selectAll('.ptree-link').data(links, d => d.target.id);
             const linkEnter = linkSel.enter().insert('path', 'g')
                 .attr('class', 'ptree-link link')
-                .attr('stroke', '#5bc8f5')
+                .attr('stroke', violetLight)
                 .attr('stroke-dasharray', '5,3')
                 .attr('d', () => {
                     const o = { x: source.x0, y: source.y0 };
@@ -710,19 +715,19 @@ const COLOR_PALETTE = [
     }
 
     function showPropInfo(propData) {
-        infoTitle.textContent = propData.label || propData.id;
-        const t = propData.type || 'rdf:Property';
-        const typeShort = t.includes('ObjectProperty') ? 'ObjectProperty'
-            : t.includes('DatatypeProperty') ? 'DatatypeProperty'
-            : t.includes('AnnotationProperty') ? 'AnnotationProperty' : 'rdf:Property';
+        infoTitle.textContent   = propData.label || propData.id;
+        const t         = propData.type || 'rdf:Property';
+        const typeShort = t.includes('ObjectProperty')     ? 'ObjectProperty'
+                        : t.includes('DatatypeProperty')   ? 'DatatypeProperty'
+                        : t.includes('AnnotationProperty') ? 'AnnotationProperty' : 'rdf:Property';
         infoComment.textContent = propData.comment || '(pas de description)';
-        infoProps.innerHTML = '';
+        infoProps.innerHTML     = '';
 
         const details = [
-            ['Type OWL', typeShort],
-            ['Domaine', propData.domain ? propData.domain.split(/[#/]/).pop() : '—'],
-            ['Portée (range)', propData.range ? propData.range.split(/[#/]/).pop() : '—'],
-            ['Sous-propriété de', propData.subPropertyOf?.length ? propData.subPropertyOf.map(u => u.split(/[#/]/).pop()).join(', ') : '—'],
+            ['Type OWL',         typeShort],
+            ['Domaine',          propData.domain         ? propData.domain.split(/[#/]/).pop()                                          : '—'],
+            ['Portée (range)',   propData.range          ? propData.range.split(/[#/]/).pop()                                           : '—'],
+            ['Sous-propriété de', propData.subPropertyOf?.length ? propData.subPropertyOf.map(u => u.split(/[#/]/).pop()).join(', ')    : '—'],
         ];
 
         details.forEach(([k, v]) => {
