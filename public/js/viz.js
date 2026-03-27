@@ -12,10 +12,10 @@
         history: [],             // breadcrumb stack [{uri, label, type}]
     };
 
-    const COLOR_PALETTE = [
-        '#7ee8a2','#5bc8f5','#f5a623','#e056fd','#ff6b6b',
-        '#48dbfb','#ff9ff3','#feca57','#54a0ff','#5f27cd'
-    ];
+const COLOR_PALETTE = [
+    '#e0bbff', '#d19aff', '#b66dff', '#9933ff', '#7a00e6',
+    '#5c00b3', '#3e0080', '#2a0066', '#1a0040', '#0d0020'
+];
 
     // ── DOM refs ──────────────────────────────────────────────────────────────
     const svg         = d3.select('#vizSvg');
