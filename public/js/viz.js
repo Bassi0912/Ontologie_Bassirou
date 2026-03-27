@@ -12,18 +12,7 @@
         history: [],             // breadcrumb stack [{uri, label, type}]
     };
 
-const COLOR_PALETTE = [
-    '#f3e6ff', // très clair
-    '#e0bbff',
-    '#cc99ff',
-    '#b366ff',
-    '#9933ff',
-    '#7a00e6',
-    '#5c00b3',
-    '#3e0080',
-    '#2a0066',
-    '#1a0040'  // très foncé
-];
+const COLOR_PALETTE = [ '#e0bbff', '#d19aff', '#b66dff', '#9933ff', '#7a00e6', '#5c00b3', '#3e0080', '#2a0066', '#1a0040', '#0d0020' ];
 
     // ── DOM refs ──────────────────────────────────────────────────────────────
     const svg         = d3.select('#vizSvg');
